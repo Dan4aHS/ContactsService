@@ -2,7 +2,6 @@ package grpchadlers
 
 import (
 	"ContactsService/internal/models/mapper"
-	"ContactsService/internal/repository"
 	"ContactsService/internal/service"
 	contactsv1 "ContactsService/pkg/pb/gen"
 	"context"
@@ -14,18 +13,18 @@ import (
 
 type serverAPI struct {
 	contactsv1.UnimplementedContactsServiceServer
-	serv service.IContactService
+	cs service.IContactService
 }
 
-func RegisterGRPCServer(server *grpc.Server, repo repository.IContactRepository) {
-	contactsv1.RegisterContactsServiceServer(server, &serverAPI{serv: service.NewContactService(repo)})
+func RegisterGRPCServer(server *grpc.Server, cs service.IContactService) {
+	contactsv1.RegisterContactsServiceServer(server, &serverAPI{cs: cs})
 }
 
 func (s *serverAPI) Create(ctx context.Context, req *contactsv1.CreateRequest) (*contactsv1.CreateResponse, error) {
 	if err := ValidateCreateRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	id, err := s.serv.CreateContact(ctx, mapper.ContactCreateGRPCtoDB(req))
+	id, err := s.cs.CreateContact(ctx, mapper.ContactCreateGRPCtoDB(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -36,7 +35,7 @@ func (s *serverAPI) Update(ctx context.Context, req *contactsv1.UpdateRequest) (
 	if err := ValidateUpdateRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	err := s.serv.UpdateContact(ctx, mapper.ContactUpdateGRPCtoDB(req.GetContact()))
+	err := s.cs.UpdateContact(ctx, mapper.ContactUpdateGRPCtoDB(req.GetContact()))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -51,7 +50,7 @@ func (s *serverAPI) Delete(ctx context.Context, req *contactsv1.DeleteRequest) (
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	err = s.serv.DeleteContact(ctx, id)
+	err = s.cs.DeleteContact(ctx, id)
 	return &contactsv1.DeleteResponse{Id: req.GetId()}, nil
 }
 
@@ -63,7 +62,7 @@ func (s *serverAPI) GetByID(ctx context.Context, req *contactsv1.GetByIDRequest)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	c, err := s.serv.GetContactByID(ctx, id)
+	c, err := s.cs.GetContactByID(ctx, id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -73,7 +72,7 @@ func (s *serverAPI) GetByID(ctx context.Context, req *contactsv1.GetByIDRequest)
 }
 
 func (s *serverAPI) List(ctx context.Context, req *contactsv1.ListRequest) (*contactsv1.ListResponse, error) {
-	contacts, err := s.serv.ListContacts(ctx, nil)
+	contacts, err := s.cs.ListContacts(ctx, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

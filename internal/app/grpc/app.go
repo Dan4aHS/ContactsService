@@ -1,41 +1,39 @@
 package grpcapp
 
 import (
-	"ContactsService/internal/repository"
+	"ContactsService/internal/service"
 	grpchadlers "ContactsService/internal/transport/grpc"
 	"fmt"
 	"google.golang.org/grpc"
+	"log"
 	"net"
 )
 
 type App struct {
-	grpcServer *grpc.Server
+	gRPCServer *grpc.Server
 	port       int
 }
 
-func NewApp(port int, repo repository.IContactRepository) *App {
+func NewApp(port int, cs service.IContactService) *App {
 	grpcServer := grpc.NewServer()
-
-	grpchadlers.RegisterGRPCServer(grpcServer, repo)
+	grpchadlers.RegisterGRPCServer(grpcServer, cs)
 
 	return &App{
-		grpcServer: grpcServer,
+		gRPCServer: grpcServer,
 		port:       port,
 	}
 }
 
-func (a *App) Run() error {
+func (a *App) Run() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
-		return err
+		log.Fatalf("failed to listen: %v", err)
 	}
-
-	if err = a.grpcServer.Serve(lis); err != nil {
-		return err
+	if err = a.gRPCServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
-	return nil
 }
 
 func (a *App) Stop() {
-	a.grpcServer.GracefulStop()
+	a.gRPCServer.GracefulStop()
 }
