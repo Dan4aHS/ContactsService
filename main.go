@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ContactsService/internal/app"
 	"ContactsService/internal/config"
 	"ContactsService/internal/repository"
 	in_memory "ContactsService/internal/repository/in-memory"
@@ -12,9 +13,16 @@ import (
 )
 
 func main() {
-	router := gin.Default()
+	//router := gin.Default()
 	cfg := config.GetConfig()
-	start(router, cfg)
+	dbx, err := postgres.ConnectPostgres(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	repo := postgres.NewContactRepository(dbx)
+	application := app.New(44044, repo)
+	application.GRPCsrv.Run()
+	//start(router, cfg)
 }
 
 func start(router *gin.Engine, cfg *config.Config) {
