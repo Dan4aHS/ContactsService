@@ -9,8 +9,18 @@ import (
 type Config struct {
 	App struct {
 		Repo string `yaml:"repo" env:"APP_REPO"`
+		Rest RestConfig
+		GRPC GRPCConfig
 	} `yaml:"app"`
 	DB DBConfig
+}
+
+type RestConfig struct {
+	Port string `yaml:"port" env:"APP_PORT"`
+}
+
+type GRPCConfig struct {
+	Port string `yaml:"port" env:"APP_PORT"`
 }
 
 type DBConfig struct {

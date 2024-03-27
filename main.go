@@ -24,7 +24,7 @@ func main() {
 		repo = in_memory.NewContactRepository()
 	}
 	cs := service.NewContactService(repo)
-	application := app.New(44044, "8080", cs)
+	application := app.New(cfg.App.GRPC.Port, cfg.App.Rest.Port, cs)
 	application.Run()
 	app.Lock(make(chan os.Signal, 1))
 }

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"strconv"
 )
 
 type App struct {
@@ -14,13 +15,16 @@ type App struct {
 	port       int
 }
 
-func NewApp(port int, cs service.IContactService) *App {
+func NewApp(port string, cs service.IContactService) *App {
 	grpcServer := grpc.NewServer()
 	grpchadlers.RegisterGRPCServer(grpcServer, cs)
-
+	p, err := strconv.Atoi(port)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &App{
 		gRPCServer: grpcServer,
-		port:       port,
+		port:       p,
 	}
 }
 

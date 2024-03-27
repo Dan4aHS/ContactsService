@@ -14,7 +14,7 @@ type App struct {
 	RESTApp *restapp.App
 }
 
-func New(grpcPort int, restPort string, cs service.IContactService) *App {
+func New(grpcPort string, restPort string, cs service.IContactService) *App {
 	grpcApp := grpcapp.NewApp(grpcPort, cs)
 	restApp := restapp.NewApp(restPort, cs)
 	return &App{

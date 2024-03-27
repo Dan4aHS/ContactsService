@@ -1,5 +1,9 @@
 app:
   repo: postgres
+  rest:
+    port: 8080
+  grpc:
+    port: 44044
 db:
   username: postgres
   password: postgres
