@@ -12,7 +12,8 @@ type Config struct {
 		Rest RestConfig
 		GRPC GRPCConfig
 	} `yaml:"app"`
-	DB DBConfig
+	DB     DBConfig
+	Broker BrokerConfig
 }
 
 type RestConfig struct {
@@ -29,6 +30,13 @@ type DBConfig struct {
 	Username string `yaml:"username" env:"DB_USERNAME"`
 	Password string `yaml:"password" env:"DB_PASSWORD"`
 	Database string `yaml:"database" env:"DB_DATABASE"`
+}
+
+type BrokerConfig struct {
+	Host     string `yaml:"host" env:"BROKER_HOST"`
+	Port     string `yaml:"port" env:"BROKER_PORT"`
+	Username string `yaml:"username" env:"BROKER_USERNAME"`
+	Password string `yaml:"password" env:"BROKER_PASSWORD"`
 }
 
 var instance *Config

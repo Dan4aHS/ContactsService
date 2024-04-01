@@ -7,6 +7,7 @@ import (
 	in_memory "ContactsService/internal/repository/in-memory"
 	"ContactsService/internal/repository/postgres"
 	"ContactsService/internal/service"
+	rabbit_amqp "ContactsService/internal/service/rabbit-amqp"
 	"log"
 	"os"
 )
@@ -23,7 +24,12 @@ func main() {
 	} else {
 		repo = in_memory.NewContactRepository()
 	}
-	cs := service.NewContactService(repo)
+	rabbitConn, err := rabbit_amqp.ConnectAMQP(cfg)
+	defer rabbitConn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	cs := service.NewContactService(repo, rabbitConn)
 	application := app.New(cfg.App.GRPC.Port, cfg.App.Rest.Port, cs)
 	application.Run()
 	app.Lock(make(chan os.Signal, 1))

@@ -9,6 +9,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/streadway/amqp v1.1.0
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.32.0
 )
