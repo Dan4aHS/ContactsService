@@ -46,6 +46,7 @@ func (c *Controller) DeleteContactHandler(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Params.ByName("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	err = c.cs.DeleteContact(ctx, id)
 	if err != nil {
@@ -58,6 +59,7 @@ func (c *Controller) GetContactByIDHandler(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Params.ByName("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	contact, err := c.cs.GetContactByID(ctx, id)
 	if err != nil {
