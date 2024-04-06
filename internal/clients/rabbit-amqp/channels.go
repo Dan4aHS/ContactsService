@@ -44,7 +44,7 @@ func NewBroker(conn *amqp.Connection) *Broker {
 	}
 }
 
-func (b *Broker) ErrorMessage(err error) {
+func (b *Broker) SendErrorMessage(err error) error {
 	body := []byte(err.Error())
 	err = b.PublisherChannel.Publish(
 		"",
@@ -56,15 +56,15 @@ func (b *Broker) ErrorMessage(err error) {
 			Body:        body,
 		})
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+	return nil
 }
 
-func (b *Broker) ContactMessage(contact dbmodels.Contact) {
+func (b *Broker) SendContactMessage(contact dbmodels.Contact) error {
 	body, err := json.Marshal(contact)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	err = b.PublisherChannel.Publish(
 		"",
@@ -76,8 +76,9 @@ func (b *Broker) ContactMessage(contact dbmodels.Contact) {
 			Body:        body,
 		})
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+	return nil
 }
 
 func (b *Broker) Close() {

@@ -2,12 +2,12 @@ package main
 
 import (
 	"ContactsService/internal/app"
+	"ContactsService/internal/clients/rabbit-amqp"
 	"ContactsService/internal/config"
 	"ContactsService/internal/repository"
 	in_memory "ContactsService/internal/repository/in-memory"
 	"ContactsService/internal/repository/postgres"
 	"ContactsService/internal/service"
-	rabbit_amqp "ContactsService/internal/service/rabbit-amqp"
 	"log"
 	"os"
 )

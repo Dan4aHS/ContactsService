@@ -60,3 +60,11 @@ func (cr *ContactRepository) ListContacts(_ context.Context, _ map[string]any) (
 	}
 	return contacts, nil
 }
+
+func (cr *ContactRepository) RollBack(_ entity.Contact) error {
+	return nil
+}
+
+func (cr *ContactRepository) Commit(_ entity.Contact) error {
+	return nil
+}

@@ -12,4 +12,6 @@ type IContactRepository interface {
 	DeleteContact(ctx context.Context, id uuid.UUID) error
 	GetContactByID(ctx context.Context, id uuid.UUID) (entity.Contact, error)
 	ListContacts(ctx context.Context, f map[string]any) ([]entity.Contact, error)
+	RollBack(contact entity.Contact) error
+	Commit(contact entity.Contact) error
 }

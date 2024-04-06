@@ -10,10 +10,11 @@ import (
 
 type ContactRepository struct {
 	db *sqlx.DB
+	ts map[uuid.UUID]*sqlx.Tx
 }
 
 func NewContactRepository(db *sqlx.DB) *ContactRepository {
-	return &ContactRepository{db: db}
+	return &ContactRepository{db: db, ts: make(map[uuid.UUID]*sqlx.Tx)}
 }
 
 func (cr *ContactRepository) CreateContact(ctx context.Context, contact entity.Contact) (uuid.UUID, error) {
@@ -23,10 +24,16 @@ func (cr *ContactRepository) CreateContact(ctx context.Context, contact entity.C
 		VALUES 
 		    ($1, $2, $3, $4, $5)
 `
-	_, err := cr.db.ExecContext(ctx, q, contact.ID, contact.FirstName, contact.SecondName, contact.MiddleName, contact.PhoneNumber)
+	var err error
+	cr.ts[contact.ID], err = cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return uuid.Nil, err
 	}
+	_, err = cr.ts[contact.ID].ExecContext(ctx, q, contact.ID, contact.FirstName, contact.SecondName, contact.MiddleName, contact.PhoneNumber)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
 	return contact.ID, nil
 }
 
@@ -104,4 +111,24 @@ func (cr *ContactRepository) ListContacts(ctx context.Context, f map[string]any)
 		return nil, err
 	}
 	return contacts, nil
+}
+
+func (cr *ContactRepository) RollBack(contact entity.Contact) error {
+	if t, ok := cr.ts[contact.ID]; ok {
+		if err := t.Rollback(); err != nil {
+			return err
+		} else {
+			delete(cr.ts, contact.ID)
+		}
+	}
+	return nil
+}
+
+func (cr *ContactRepository) Commit(contact entity.Contact) error {
+	if err := cr.ts[contact.ID].Commit(); err != nil {
+		return err
+	} else {
+		delete(cr.ts, contact.ID)
+	}
+	return nil
 }

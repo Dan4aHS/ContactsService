@@ -1,14 +1,15 @@
 package service
 
 import (
+	"ContactsService/internal/clients/rabbit-amqp"
 	"ContactsService/internal/models/dbmodels"
 	"ContactsService/internal/models/entity"
 	"ContactsService/internal/models/mapper"
 	"ContactsService/internal/repository"
-	"ContactsService/internal/service/rabbit-amqp"
 	"context"
 	"github.com/google/uuid"
 	"github.com/streadway/amqp"
+	"log"
 )
 
 type ContactService struct {
@@ -22,11 +23,26 @@ func NewContactService(repo repository.IContactRepository, conn *amqp.Connection
 }
 
 func (cs *ContactService) CreateContact(ctx context.Context, contact dbmodels.Contact) (uuid.UUID, error) {
-	cs.Broker.ContactMessage(contact)
 	id, err := cs.Repo.CreateContact(ctx, mapper.ContactDBToEntity(contact))
 	if err != nil {
-		cs.Broker.ErrorMessage(err)
+		brErr := cs.Broker.SendErrorMessage(err)
+		if brErr != nil {
+			return uuid.Nil, brErr
+		}
 		return uuid.Nil, err
+	}
+	err = cs.Broker.SendContactMessage(contact)
+	if err != nil {
+		rbErr := cs.Repo.RollBack(mapper.ContactDBToEntity(contact))
+		if rbErr != nil {
+			return uuid.Nil, rbErr
+		}
+		return uuid.Nil, err
+	} else {
+		cErr := cs.Repo.Commit(mapper.ContactDBToEntity(contact))
+		if cErr != nil {
+			return uuid.Nil, cErr
+		}
 	}
 	return id, nil
 }
@@ -34,7 +50,10 @@ func (cs *ContactService) CreateContact(ctx context.Context, contact dbmodels.Co
 func (cs *ContactService) UpdateContact(ctx context.Context, contact dbmodels.Contact) error {
 	err := cs.Repo.UpdateContact(ctx, mapper.ContactDBToEntity(contact))
 	if err != nil {
-		cs.Broker.ErrorMessage(err)
+		brErr := cs.Broker.SendErrorMessage(err)
+		if brErr != nil {
+			log.Fatal(brErr)
+		}
 		return err
 	}
 	return nil
@@ -43,7 +62,10 @@ func (cs *ContactService) UpdateContact(ctx context.Context, contact dbmodels.Co
 func (cs *ContactService) DeleteContact(ctx context.Context, id uuid.UUID) error {
 	err := cs.Repo.DeleteContact(ctx, id)
 	if err != nil {
-		cs.Broker.ErrorMessage(err)
+		brErr := cs.Broker.SendErrorMessage(err)
+		if brErr != nil {
+			log.Fatal(brErr)
+		}
 		return err
 	}
 	return nil
@@ -52,7 +74,10 @@ func (cs *ContactService) DeleteContact(ctx context.Context, id uuid.UUID) error
 func (cs *ContactService) GetContactByID(ctx context.Context, id uuid.UUID) (entity.Contact, error) {
 	c, err := cs.Repo.GetContactByID(ctx, id)
 	if err != nil {
-		cs.Broker.ErrorMessage(err)
+		brErr := cs.Broker.SendErrorMessage(err)
+		if brErr != nil {
+			log.Fatal(brErr)
+		}
 		return entity.Contact{}, err
 	}
 	return c, nil
@@ -61,7 +86,10 @@ func (cs *ContactService) GetContactByID(ctx context.Context, id uuid.UUID) (ent
 func (cs *ContactService) ListContacts(ctx context.Context, f map[string]any) ([]entity.Contact, error) {
 	c, err := cs.Repo.ListContacts(ctx, f)
 	if err != nil {
-		cs.Broker.ErrorMessage(err)
+		brErr := cs.Broker.SendErrorMessage(err)
+		if brErr != nil {
+			log.Fatal(brErr)
+		}
 		return nil, err
 	}
 	return c, nil
